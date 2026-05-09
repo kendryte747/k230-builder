@@ -107,14 +107,21 @@ k230 rtos          # 进入 RTOS SDK 环境
 ```text
 容器启动
     ↓
-遍历 ENABLE_TC1~4
+root 用户启动 entrypoint.sh
     ↓
-已安装（.version + .installed 匹配） → 跳过
-未安装 → 自动下载并解压到 /opt/toolchains/
+读取 HOST_UID / HOST_GID
+    ↓
+创建对应 UID/GID 用户
+    ↓
+复制 SSH/Git 配置
+    ↓
+初始化 toolchain, 如果不存在则自动下载
     ↓
 设置 PATH
     ↓
-切换到用户，执行 CMD
+切换到 HOST_UID 用户
+    ↓
+执行 bash 或用户命令
 ```
 
 ---

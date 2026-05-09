@@ -35,6 +35,11 @@ fi
 
 VOLUME="${K230_BUILDER_VOLUME:-k230_toolchains}"
 
+# ---- Auto-mount host SSH keys and Git config ----
+EXTRA_MOUNTS=()
+[ -d "$HOME/.ssh" ]     && EXTRA_MOUNTS+=(-v "$HOME/.ssh:/tmp/host-ssh:ro")
+[ -f "$HOME/.gitconfig" ] && EXTRA_MOUNTS+=(-v "$HOME/.gitconfig:/tmp/host-gitconfig:ro")
+
 exec docker run -it --rm \
     -e HOST_UID="$(id -u)" \
     -e HOST_GID="$(id -g)" \
@@ -42,5 +47,6 @@ exec docker run -it --rm \
     -v "${VOLUME}:/opt/toolchains" \
     -v "$(pwd):/workspace" \
     -w /workspace \
+    "${EXTRA_MOUNTS[@]}" \
     "$IMAGE" \
     "$@"

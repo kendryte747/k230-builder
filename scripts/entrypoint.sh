@@ -35,6 +35,31 @@ create_user() {
 }
 
 # ============================================
+# Setup SSH keys and Git config from host
+# ============================================
+setup_host_config() {
+    local home_dir
+    home_dir=$(getent passwd "$HOST_UID" | cut -d: -f6)
+
+    # SSH: copy keys from host mount to user home
+    if [ -d /tmp/host-ssh ] && [ -n "$(ls -A /tmp/host-ssh 2>/dev/null)" ]; then
+        mkdir -p "$home_dir/.ssh"
+        cp -r /tmp/host-ssh/* "$home_dir/.ssh/"
+        chmod 700 "$home_dir/.ssh"
+        chmod 600 "$home_dir/.ssh"/* 2>/dev/null || true
+        chown -R "$HOST_UID:$HOST_GID" "$home_dir/.ssh"
+        echo "[k230] SSH keys loaded from host"
+    fi
+
+    # Git config: copy from host mount to user home
+    if [ -f /tmp/host-gitconfig ]; then
+        cp /tmp/host-gitconfig "$home_dir/.gitconfig"
+        chown "$HOST_UID:$HOST_GID" "$home_dir/.gitconfig"
+        echo "[k230] Git config loaded from host"
+    fi
+}
+
+# ============================================
 # Initialize toolchains
 # ============================================
 init_toolchains() {
@@ -90,6 +115,9 @@ k230_setup_env() {
 # Main execution
 # ============================================
 create_user
+
+# Load SSH keys and Git config from host
+setup_host_config
 
 # Initialize toolchains
 init_toolchains
