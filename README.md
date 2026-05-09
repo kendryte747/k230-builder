@@ -33,56 +33,71 @@
 
 ## 🚀 快速开始
 
-### 1️⃣ 运行容器
+### 1️⃣ 安装 wrapper（推荐）
 
 ```bash
-# 默认（全部 4 套工具链按需下载）
-docker run -it \
-  -e HOST_UID=$(id -u) \
-  -e HOST_GID=$(id -g) \
+cp k230-build ~/.local/bin/
+# 如果 ~/.local/bin 不在 $PATH 中：
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+```
+
+`k230-build` 会自动检测网络连通性：
+- 优先使用 `ghcr.io/huangzhenming/k230-builder:latest`（全球）
+- GHCR 不可达时自动切换 `registry.kendryte.com/k230-builder:latest`（国内镜像）
+
+也可手动指定：`K230_BUILDER_IMAGE=xxx k230-build make`
+
+### 2️⃣ 编译 SDK
+
+```bash
+cd your-k230-sdk/
+
+# 编译（默认 TC4 不下载，如需 ILP32 用 ENABLE_TC4=1）
+k230-build make CONF=k230_canmv_defconfig
+
+# 其他命令直接透传
+k230-build make
+k230-build bash
+```
+
+### 3️⃣ 手动 docker run（高级用法）
+
+```bash
+# 默认（4 套工具链按需下载）
+docker run -it --rm \
+  -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) \
   -v k230_toolchains:/opt/toolchains \
-  -v $(pwd):/workspace \
-  -w /workspace \
+  -v $(pwd):/workspace -w /workspace \
   ghcr.io/huangzhenming/k230-builder:latest
 
 # 仅 Linux SDK
-docker run -it \
+docker run -it --rm \
   -e ENABLE_TC1=0 -e ENABLE_TC3=0 -e ENABLE_TC4=0 \
   -v k230_toolchains:/opt/toolchains \
+  -v $(pwd):/workspace -w /workspace \
   ghcr.io/huangzhenming/k230-builder:latest
 
 # 仅 RTOS SDK
-docker run -it \
+docker run -it --rm \
   -e ENABLE_TC2=0 -e ENABLE_TC4=0 \
   -v k230_toolchains:/opt/toolchains \
-  ghcr.io/huangzhenming/k230-builder:latest
-
-# 自定义下载源
-docker run -it \
-  -e TC1_URLS="https://mirror/tc1.tar.bz2 https://mirror2/tc1.tar.bz2" \
-  -v k230_toolchains:/opt/toolchains \
+  -v $(pwd):/workspace -w /workspace \
   ghcr.io/huangzhenming/k230-builder:latest
 ```
 
 ---
 
-### 2️⃣ CLI 进入容器后
+### 3️⃣ 容器内 CLI
 
 ```bash
-# 查看已安装的工具链状态
-k230 env
+k230-build bash    # 先进入容器
 
-# 手动触发下载（根据 ENABLE_* 环境变量）
-k230 setup
-
-# 下载指定工具链
-k230 setup tc2
-
-# 进入 Linux SDK 环境
-k230 linux
-
-# 进入 RTOS SDK 环境
-k230 rtos
+# 容器内可用命令：
+k230 env           # 查看已安装的工具链状态
+k230 setup         # 手动触发下载（根据 ENABLE_* 环境变量）
+k230 setup tc2     # 下载指定工具链
+k230 linux         # 进入 Linux SDK 环境
+k230 rtos          # 进入 RTOS SDK 环境
 ```
 
 ---
