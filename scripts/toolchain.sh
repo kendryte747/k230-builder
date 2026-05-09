@@ -16,6 +16,7 @@ TC1_VERSION=${TC1_VERSION:-"V2.6.0"}
 TC1_DIR=${TC1_DIR:-"Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0"}
 TC1_BIN=${TC1_BIN:-"riscv64-unknown-linux-gnu-gcc"}
 TC1_BIN_FULL="bin/${TC1_BIN}"
+TC1_SHA256=${TC1_SHA256:-"17decb02130b8d79a1eb8c2126e17749fbea603dae7d95f20cd4ab411f3f1a41"}
 
 # ===== TC2: Xuantie-900 gcc 6.6.0 (glibc, gz) =====
 TC2_URLS=${TC2_URLS:-"https://kendryte-download.canaan-creative.com/k230/downloads/dl/gcc/Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V3.0.2-20250410.tar.gz"}
@@ -23,6 +24,7 @@ TC2_VERSION=${TC2_VERSION:-"V3.0.2"}
 TC2_DIR=${TC2_DIR:-"Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V3.0.2"}
 TC2_BIN=${TC2_BIN:-"riscv64-unknown-linux-gnu-gcc"}
 TC2_BIN_FULL="bin/${TC2_BIN}"
+TC2_SHA256=${TC2_SHA256:-"2215e1ffe1b9b9277b1f5af2f61102e83973163404f29b04da7097fdafa9e1b7"}
 
 # ===== TC3: musl (RT-Smart, bz2) =====
 TC3_URLS=${TC3_URLS:-"https://kendryte-download.canaan-creative.com/k230/toolchain/riscv64-unknown-linux-musl-rv64imafdcv-lp64d-20230420.tar.bz2"}
@@ -30,6 +32,7 @@ TC3_VERSION=${TC3_VERSION:-"20230420"}
 TC3_DIR=${TC3_DIR:-"riscv64-linux-musleabi_for_x86_64-pc-linux-gnu"}
 TC3_BIN=${TC3_BIN:-"riscv64-unknown-linux-musl-gcc"}
 TC3_BIN_FULL="bin/${TC3_BIN}"
+TC3_SHA256=${TC3_SHA256:-"8e09965b2f5d9b6f19d7f552e63d09eb1d217451ba352e5196158e32fb0ee08a"}
 
 # ===== TC4: ILP32 elf (riscv/ subdirectory, gz) =====
 TC4_URLS=${TC4_URLS:-"https://github.com/ruyisdk/riscv-gnu-toolchain-rv64ilp32/releases/download/2024.06.25/riscv64ilp32-elf-ubuntu-22.04-gcc-nightly-2024.06.25-nightly.tar.gz"}
@@ -37,6 +40,7 @@ TC4_VERSION=${TC4_VERSION:-"2024.06.25"}
 TC4_DIR=${TC4_DIR:-"riscv64ilp32-elf-ubuntu-22.04-gcc-nightly-2024.06.25"}
 TC4_BIN=${TC4_BIN:-"riscv64-unknown-elf-gcc"}
 TC4_BIN_FULL="riscv/bin/${TC4_BIN}"
+TC4_SHA256=${TC4_SHA256:-"65cbdaa654890b02bf5d83c8f9a054bbf105126a08bb483d31620890851310bf"}
 
 # ===== Check if toolchain is already installed and valid =====
 # Args: DIR, VERSION, BIN (filename only), BIN_FULL (relative path from DIR)
@@ -81,55 +85,54 @@ download_with_fallback() {
     local OUTPUT=$2
 
     for url in $URLS; do
-        echo "[k230] trying: $url"
-        if curl -L --fail --retry 2 -o "$OUTPUT" "$url" 2>/dev/null; then
-            echo "[k230] download success: $url"
+        echo "[k230] downloading: $url"
+        if curl -L --fail \
+                --connect-timeout 30 \
+                --retry 20 \
+                --retry-delay 5 \
+                --show-error \
+                -C - -o "$OUTPUT" \
+                "$url"; then
+            echo "[k230] download success"
             return 0
         fi
-        echo "[k230] download failed: $url"
+        echo "[k230] download failed, trying next source..."
     done
 
     echo "[k230] error: all download sources failed"
     return 1
 }
 
-# ===== Verify MD5 (optional) =====
-verify_md5() {
+# ===== Verify SHA256 (optional, skipped if not configured) =====
+verify_sha256() {
     local FILE=$1
-    local MD5_URL=$2
+    local EXPECTED=$2
 
-    [ -z "$MD5_URL" ] && return 0
+    [ -z "$EXPECTED" ] && return 0
 
-    local TMP_MD5=/tmp/file.md5
+    local ACTUAL
+    ACTUAL=$(sha256sum "$FILE" 2>/dev/null | awk '{print $1}')
 
-    if curl -L --fail -o "$TMP_MD5" "$MD5_URL" 2>/dev/null; then
-        echo "[k230] md5 file downloaded"
-        local EXPECTED=$(awk '{print $1}' "$TMP_MD5")
-        local ACTUAL=$(md5sum "$FILE" | awk '{print $1}')
-
-        if [ "$EXPECTED" != "$ACTUAL" ]; then
-            echo "[k230] error: md5 mismatch"
-            rm -f "$TMP_MD5"
-            return 1
-        fi
-        echo "[k230] md5 verified"
-    else
-        echo "[k230] warn: md5 not available, skipping verification"
+    if [ -z "$ACTUAL" ] || [ "$ACTUAL" != "$EXPECTED" ]; then
+        echo "[k230] error: sha256 mismatch"
+        echo "[k230] expected: $EXPECTED"
+        echo "[k230] actual:   $ACTUAL"
+        return 1
     fi
 
-    rm -f "$TMP_MD5"
+    echo "[k230] sha256 verified"
     return 0
 }
 
 # ===== Install toolchain (generic, handles all 4 TCs) =====
-# Args: NAME, VERSION, BIN (filename), BIN_FULL (relative path), URLS, MD5_URL, DIR_NAME, EXTENSION
+# Args: NAME, VERSION, BIN (filename), BIN_FULL (relative path), URLS, SHA256, DIR_NAME, EXTENSION
 install_toolchain() {
     local NAME=$1
     local VERSION=$2
     local BIN=$3
     local BIN_FULL=$4
     local URLS=$5
-    local MD5_URL=$6
+    local SHA256=$6
     local DIR_NAME=$7
     local EXTENSION=${8:-"bz2"}
 
@@ -199,8 +202,8 @@ install_toolchain() {
         exit 1
     fi
 
-    # Verify MD5 (optional)
-    if ! verify_md5 "$TMP" "$MD5_URL"; then
+    # Verify SHA256 (optional)
+    if ! verify_sha256 "$TMP" "$SHA256"; then
         echo "[k230] error: integrity check failed"
         exit 1
     fi
@@ -224,7 +227,7 @@ download_tc1() {
         "$TC1_BIN" \
         "$TC1_BIN_FULL" \
         "$TC1_URLS" \
-        "" \
+        "$TC1_SHA256" \
         "$TC1_DIR" \
         "bz2"
 }
@@ -236,7 +239,7 @@ download_tc2() {
         "$TC2_BIN" \
         "$TC2_BIN_FULL" \
         "$TC2_URLS" \
-        "" \
+        "$TC2_SHA256" \
         "$TC2_DIR" \
         "gz"
 }
@@ -248,7 +251,7 @@ download_tc3() {
         "$TC3_BIN" \
         "$TC3_BIN_FULL" \
         "$TC3_URLS" \
-        "" \
+        "$TC3_SHA256" \
         "$TC3_DIR" \
         "bz2"
 }
@@ -260,7 +263,7 @@ download_tc4() {
         "$TC4_BIN" \
         "$TC4_BIN_FULL" \
         "$TC4_URLS" \
-        "" \
+        "$TC4_SHA256" \
         "$TC4_DIR" \
         "gz"
 }

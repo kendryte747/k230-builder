@@ -22,18 +22,44 @@ fi
 
 # ---- Auto-select registry ----
 # Prefer ghcr.io (global), fall back to registry.kendryte.com (China mirror).
-# Override with K230_BUILDER_IMAGE env var.
+# Override with K230_BUILDER_IMAGE, tag with K230_BUILDER_TAG.
+
+TAG="${K230_BUILDER_TAG:-latest}"
 
 if [ -n "${K230_BUILDER_IMAGE}" ]; then
     IMAGE="${K230_BUILDER_IMAGE}"
 elif timeout 3 bash -c 'echo > /dev/tcp/ghcr.io/443' 2>/dev/null; then
-    IMAGE="ghcr.io/huangzhenming/k230-builder:latest"
+    IMAGE="ghcr.io/huangzhenming/k230-builder:${TAG}"
 else
     echo "[k230] ghcr.io unreachable, using mirror registry.kendryte.com"
-    IMAGE="registry.kendryte.com/k230-builder:latest"
+    IMAGE="registry.kendryte.com/k230-builder:${TAG}"
 fi
 
 VOLUME="${K230_BUILDER_VOLUME:-k230_toolchains}"
+
+# ---- Handle special commands ----
+case "${1:-}" in
+    pull|update)
+        PULL_IMAGE="$IMAGE"
+        if [ -n "${2:-}" ]; then
+            PULL_IMAGE="${IMAGE%:*}:${2}"
+        fi
+        echo "[k230] pulling $PULL_IMAGE ..."
+        exec docker pull "$PULL_IMAGE"
+        ;;
+    help|--help|-h)
+        echo "k230 — K230 SDK build wrapper"
+        echo ""
+        echo "Usage:"
+        echo "  k230 make CONF=k230_canmv_defconfig   build SDK"
+        echo "  k230 bash                              enter container shell"
+        echo "  k230 pull [tag]                        pull Docker image (default: latest)"
+        echo "  k230 help                              show this message"
+        echo ""
+        echo "Any other command is passed through to the container."
+        exit 0
+        ;;
+esac
 
 # ---- Auto-mount host SSH keys, Git config, and Docker socket ----
 EXTRA_MOUNTS=()

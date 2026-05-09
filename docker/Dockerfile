@@ -75,8 +75,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # .NET Runtime (for nncase v2)
     dotnet-runtime-7.0 \
     libicu-dev \
-    # Docker CLI (for docker-in-docker, mount /var/run/docker.sock at runtime)
-    docker-ce-cli \
+    # Docker CLI (mount /var/run/docker.sock at runtime)
+    docker.io \
     # genimage dependencies
     libconfuse-dev \
     libffi-dev \
