@@ -36,16 +36,16 @@
 ### 1️⃣ 安装 wrapper（推荐）
 
 ```bash
-cp k230-build ~/.local/bin/
+cp k230 ~/.local/bin/
 # 如果 ~/.local/bin 不在 $PATH 中：
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-`k230-build` 会自动检测网络连通性：
+`k230` 会自动检测网络连通性：
 - 优先使用 `ghcr.io/huangzhenming/k230-builder:latest`（全球）
 - GHCR 不可达时自动切换 `registry.kendryte.com/k230-builder:latest`（国内镜像）
 
-也可手动指定：`K230_BUILDER_IMAGE=xxx k230-build make`
+也可手动指定：`K230_BUILDER_IMAGE=xxx k230 make`
 
 ### 2️⃣ 编译 SDK
 
@@ -53,11 +53,11 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 cd your-k230-sdk/
 
 # 编译（默认 TC4 不下载，如需 ILP32 用 ENABLE_TC4=1）
-k230-build make CONF=k230_canmv_defconfig
+k230 make CONF=k230_canmv_defconfig
 
 # 其他命令直接透传
-k230-build make
-k230-build bash
+k230 make
+k230 bash
 ```
 
 ### 3️⃣ 手动 docker run（高级用法）
@@ -90,7 +90,7 @@ docker run -it --rm \
 ### 3️⃣ 容器内 CLI
 
 ```bash
-k230-build bash    # 先进入容器
+k230 bash          # 先进入容器
 
 # 容器内可用命令：
 k230 env           # 查看已安装的工具链状态

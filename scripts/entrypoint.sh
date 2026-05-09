@@ -89,6 +89,11 @@ init_toolchains() {
 # Setup environment
 # ============================================
 k230_setup_env() {
+    # Set HOME/USER/LOGNAME for correct gosu behavior
+    export HOME=$(getent passwd "$HOST_UID" | cut -d: -f6)
+    export USER="$USERNAME"
+    export LOGNAME="$USERNAME"
+
     # TC1: xuantie-5.10.4
     if [ -d "/opt/toolchains/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin" ]; then
         export PATH="/opt/toolchains/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin:$PATH"
@@ -127,7 +132,11 @@ k230_setup_env
 
 echo "[k230] Switching to user: $USERNAME"
 if [ $# -eq 0 ]; then
-    exec gosu "$HOST_UID:$HOST_GID" bash
+    exec gosu "$HOST_UID:$HOST_GID" env \
+        HOME="$HOME" USER="$USER" LOGNAME="$LOGNAME" PATH="$PATH" \
+        bash
 else
-    exec gosu "$HOST_UID:$HOST_GID" "$@"
+    exec gosu "$HOST_UID:$HOST_GID" env \
+        HOME="$HOME" USER="$USER" LOGNAME="$LOGNAME" PATH="$PATH" \
+        "$@"
 fi

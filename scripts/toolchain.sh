@@ -135,10 +135,19 @@ install_toolchain() {
 
     local DIR=$TOOLCHAIN_ROOT/$DIR_NAME
     local TMP=/tmp/${NAME}.tar.${EXTENSION}
+    local LOCKFILE="$TOOLCHAIN_ROOT/.lock"
+
+    # Acquire lock to prevent concurrent install of same toolchain
+    exec 9>"$LOCKFILE"
+    if ! flock -n 9; then
+        echo "[k230] $NAME is being installed by another process, waiting..."
+        flock 9
+    fi
 
     # Check if already installed and valid
     if check_toolchain "$DIR" "$VERSION" "$BIN" "$BIN_FULL"; then
         echo "[k230] $NAME already installed (version=$VERSION)"
+        exec 9>&-
         return 0
     fi
 
@@ -203,6 +212,7 @@ install_toolchain() {
     rm -f "$TMP"
 
     echo "[k230] $NAME installed (version=$VERSION)"
+    exec 9>&-
 }
 
 # ===== Download functions for each toolchain =====

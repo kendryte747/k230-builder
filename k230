@@ -1,10 +1,10 @@
 #!/bin/bash
-# k230-build — Wrap k230-builder Docker container, pass any command through.
+# k230 — Wrap k230-builder Docker container, pass any command through.
 #
-# Install:  cp k230-build /usr/local/bin/  (or anywhere on $PATH)
-# Usage:    k230-build make CONF=k230_canmv_defconfig
-#           k230-build bash
-#           k230-build make
+# Install:  cp k230 ~/.local/bin/  (or anywhere on $PATH)
+# Usage:    k230 make CONF=k230_canmv_defconfig
+#           k230 bash
+#           k230 make
 #
 # All args after the script name are passed to the container as the command.
 
@@ -35,10 +35,11 @@ fi
 
 VOLUME="${K230_BUILDER_VOLUME:-k230_toolchains}"
 
-# ---- Auto-mount host SSH keys and Git config ----
+# ---- Auto-mount host SSH keys, Git config, and Docker socket ----
 EXTRA_MOUNTS=()
 [ -d "$HOME/.ssh" ]     && EXTRA_MOUNTS+=(-v "$HOME/.ssh:/tmp/host-ssh:ro")
 [ -f "$HOME/.gitconfig" ] && EXTRA_MOUNTS+=(-v "$HOME/.gitconfig:/tmp/host-gitconfig:ro")
+[ -S /var/run/docker.sock ] && EXTRA_MOUNTS+=(-v /var/run/docker.sock:/var/run/docker.sock)
 
 exec docker run -it --rm \
     -e HOST_UID="$(id -u)" \
