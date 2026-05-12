@@ -1,8 +1,8 @@
 #!/bin/bash
 # k230-builder installer
 # Usage:
-#   curl -fsSL https://www.kendryte.com/k230/install.sh | bash
-#   curl -fsSL https://www.kendryte.com/k230/install.sh | bash -s -- --uninstall
+#   curl -fsSL https://www.kendryte.com/misc/install.sh | bash
+#   curl -fsSL https://www.kendryte.com/misc/install.sh | bash -s -- --uninstall
 #
 # For GitHub users (no kendryte.com access):
 #   curl -fsSL https://raw.githubusercontent.com/huangzhenming/k230-builder/main/install.sh | bash
