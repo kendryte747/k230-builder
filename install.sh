@@ -11,9 +11,8 @@ set -e
 
 BIN_DIR="$HOME/.local/bin"
 TARGET_FILE="$BIN_DIR/k230"
-
-BIN_DIR="$HOME/.local/bin"
-TARGET_FILE="$BIN_DIR/k230"
+KENDRYTE_BASE="${KENDRYTE_INSTALL_URL:-https://www.kendryte.com/misc}"
+SCRIPT_NAME="k230"
 
 info()  { echo "[k230-install] $1"; }
 warn()  { echo "[k230-install] ⚠️  $1"; }

@@ -10,7 +10,7 @@ Docker build environment for K230 Linux & RTOS SDKs — one image, four toolchai
 
 国内用户（推荐）：
 ```bash
-curl -fsSL https://www.kendryte.com/k230/install.sh | bash
+curl -fsSL https://www.kendryte.com/misc/install.sh | bash
 ```
 
 GitHub（备选）：
@@ -20,7 +20,7 @@ curl -fsSL https://raw.githubusercontent.com/huangzhenming/k230-builder/main/ins
 
 安装后执行 `source ~/.bashrc` 使 PATH 生效。如需卸载：
 ```bash
-curl -fsSL https://www.kendryte.com/k230/install.sh | bash -s -- --uninstall
+curl -fsSL https://www.kendryte.com/misc/install.sh | bash -s -- --uninstall
 ```
 
 ### 编译 SDK
