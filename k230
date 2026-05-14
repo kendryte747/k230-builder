@@ -84,6 +84,8 @@ case "${1:-}" in
         ensure_image "$PULL_IMAGE"
         exit 0
         ;;
+    download-toolchains)
+        ;;&
     help|--help|-h)
         echo "k230 — K230 SDK build wrapper"
         echo ""
@@ -91,6 +93,7 @@ case "${1:-}" in
         echo "  k230 make CONF=k230_canmv_defconfig   build SDK"
         echo "  k230 bash                              enter container shell"
         echo "  k230 pull [tag]                        pull Docker image (default: latest)"
+        echo "  k230 download-toolchains [-l] [TC1 ..] download toolchains"
         echo "  k230 help                              show this message"
         echo ""
         echo "Any other command is passed through to the container."

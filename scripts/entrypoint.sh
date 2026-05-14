@@ -121,14 +121,15 @@ k230_setup_env() {
 # ============================================
 create_user
 
-# Load SSH keys and Git config from host
 setup_host_config
 
-# Initialize toolchains
-init_toolchains
-
-# Setup environment
 k230_setup_env
+
+case "${1:-}" in
+    download-toolchains|list-toolchains)
+        exec /usr/local/bin/"$1" "${@:2}"
+        ;;
+esac
 
 echo "[k230] Switching to user: $USERNAME"
 if [ $# -eq 0 ]; then
