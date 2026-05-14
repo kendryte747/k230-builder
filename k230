@@ -81,7 +81,18 @@ case "${1:-}" in
         if [ -n "${2:-}" ]; then
             PULL_IMAGE="${IMAGE%:*}:${2}"
         fi
-        ensure_image "$PULL_IMAGE"
+        echo "[k230] pulling $PULL_IMAGE ..."
+        docker pull "$PULL_IMAGE" || {
+            echo "[k230] ghcr pull failed, trying mirror..."
+            docker pull "$MIRROR" || {
+                echo "[k230] pull failed"
+                exit 1
+            }
+            if [ "$PULL_IMAGE" != "$MIRROR" ]; then
+                docker tag "$MIRROR" "$PULL_IMAGE"
+                echo "[k230] tagged $MIRROR -> $PULL_IMAGE"
+            fi
+        }
         exit 0
         ;;
     download-toolchains)
