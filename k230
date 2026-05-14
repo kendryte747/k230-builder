@@ -116,7 +116,13 @@ if [ -S /var/run/docker.sock ]; then
     fi
 fi
 
+# 限制并发数，防止因并发过高触发 host-dbus-glib 等包的编译 Bug
+# 建议用户手动传入 -j 参数，否则默认使用 nproc
+MAKE_J_LEVEL="-j$(nproc)"
+
 exec docker run -it --rm \
+    --security-opt seccomp=unconfined \
+    --ulimit nofile=1024:2048 \
     -e HOST_UID="$(id -u)" \
     -e HOST_GID="$(id -g)" \
     -e ENABLE_TC4="${ENABLE_TC4:-0}" \
